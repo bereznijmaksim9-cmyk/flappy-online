@@ -14,7 +14,6 @@
         }
         canvas { display: block; width: 100vw; height: 100vh; }
         
-        /* Анимация левитации меню */
         @keyframes float {
             0% { transform: translate(-50%, -50%) translateY(0px); }
             50% { transform: translate(-50%, -50%) translateY(-10px); }
@@ -64,14 +63,13 @@
         .hud-box { background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 10px; font-size: 18px; margin: 10px; pointer-events: auto; text-shadow: 1px 1px 0 #000; }
         #top-left { position: absolute; top: 10px; left: 10px; }
         #top-right { position: absolute; top: 10px; right: 10px; text-align: right; }
-        #leave-btn { background: #E53935; border-bottom-color: #B71C1C; padding: 8px 15px; width: auto; margin-top: 10px; font-size: 14px; }
+        #leave-btn { background: #E53935; border-bottom-color: #B71C1C; padding: 8px 15px; width: auto; margin-top: 10px; font-size: 14px; pointer-events: auto; }
         
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- MAIN MENU -->
     <div id="menu" class="panel">
         <h1>Flappy Online</h1>
         <div>💰 Coins: <span id="menuCoins">0</span></div>
@@ -87,11 +85,9 @@
         <button onclick="toggleShop()" style="background:#FF9800; border-bottom-color:#F57C00;">🛒 Skin Shop</button>
     </div>
 
-    <!-- SHOP -->
     <div id="shop" class="panel hidden">
         <h2>Skin Shop</h2>
         <div>💰 Coins: <span id="shopCoins">0</span></div>
-        
         <div class="shop-item">
             <span>Rainbow (50 💰)</span><br>
             <button onclick="buySkin('rainbow', 50)">Buy / Equip</button>
@@ -104,11 +100,9 @@
             <span>Default Color</span><br>
             <button onclick="equipSkin('default')">Equip</button>
         </div>
-        
         <button onclick="toggleShop()" style="background:#757575; border-bottom-color:#424242; margin-top: 20px;">Back to Menu</button>
     </div>
 
-    <!-- GAME UI -->
     <div id="game-ui">
         <div id="top-left" class="hud-box">
             <div id="leaderboard"></div>
@@ -127,7 +121,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Audio System
         let audioCtx;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -148,11 +141,13 @@
                 gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
                 osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'score') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.setValueAtTime(800, now + 0.1);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now); osc.stop(now + 0.2);
+                // Изменен звук: мягкий и тихий "бульк/динь" вместо резкого писка
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now); // Сделал сильно тише
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'hit') {
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(150, now);
@@ -169,7 +164,6 @@
             }
         }
 
-        // Player Data & Local Storage
         let savedCoins = parseInt(localStorage.getItem('coins')) || 0;
         let bestRecord = parseInt(localStorage.getItem('record')) || 0;
         let mySkin = localStorage.getItem('skin') || 'default';
@@ -181,7 +175,6 @@
         document.getElementById('menuRecord').innerText = bestRecord;
         document.getElementById('shopCoins').innerText = savedCoins;
 
-        // Game State Variables
         let myId = '', currentRoom = '', players = {};
         let gameState = 'menu';
         let gameLoop, networkInterval;
@@ -193,17 +186,16 @@
         let particles = [];
         let floatingTexts = [];
         let pipeCount = 0;
-        let bgOffset = 0; // Для анимации фона
+        let bgOffset = 0; 
 
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            bird.x = Math.min(canvas.width * 0.2, 250); // Птица слева, но не уезжает слишком далеко на ПК
+            bird.x = Math.min(canvas.width * 0.2, 250); 
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // --- SHOP ---
         function toggleShop() {
             document.getElementById('menu').classList.toggle('hidden');
             document.getElementById('shop').classList.toggle('hidden');
@@ -234,9 +226,7 @@
             }
         }
 
-        // --- NETWORK ---
         socket.on('connect', () => { myId = socket.id; });
-
         socket.on('roomList', (list) => {
             let html = '';
             if(list.length === 0) html = '<p style="color:#aaa;">No active lobbies</p>';
@@ -295,7 +285,6 @@
             document.getElementById('menu').classList.remove('hidden');
         }
 
-        // --- GAME LOGIC ---
         function resetGame() {
             bird.y = canvas.height / 2;
             bird.velocity = 0;
@@ -305,15 +294,22 @@
             pipeCount = 0;
             document.getElementById('gameCoins').innerText = savedCoins;
             gameState = 'ready';
+            
+            // Спавним первую трубу ближе (чуть дальше середины экрана)
+            addPipe(canvas.width * 0.7); 
         }
 
         let lastFlap = 0;
         function flap(e) {
-            if (e && e.type === 'touchstart') e.preventDefault(); // ФИКС ДВОЙНОГО КЛИКА
-            if (gameState === 'menu' || e?.target?.id === 'leave-btn') return;
+            // ФИКС UI: Если нажали на кнопку или поле ввода - игнорируем прыжок
+            if (e && e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT')) return;
+            // Блокируем скролл только для канваса, кнопки теперь будут нажиматься
+            if (e && e.type === 'touchstart') e.preventDefault(); 
+            
+            if (gameState === 'menu') return;
             
             let now = Date.now();
-            if (now - lastFlap < 100) return; // Троттлинг кликов
+            if (now - lastFlap < 80) return; 
             lastFlap = now;
 
             if (gameState === 'ready') {
@@ -339,14 +335,17 @@
             return x - Math.floor(x);
         }
 
-        function addPipe() {
-            let gap = Math.max(160, canvas.height * 0.2); // Динамический разрыв
+        function addPipe(customSpawnOffset) {
+            // Динамический размер прохода (добавлена рандомность)
+            let randGapModifier = getDeterministicRandom(pipeCount + 500); 
+            let gap = Math.max(140, canvas.height * 0.22) + (randGapModifier * 60); // Размер меняется
+            
             let minHeight = 80;
             let maxHeight = canvas.height - gap - minHeight;
             let rand = getDeterministicRandom(pipeCount);
             let topHeight = rand * (maxHeight - minHeight) + minHeight;
 
-            let spawnDistance = bird.distance + canvas.width + 100; // Спавн за экраном с запасом
+            let spawnDistance = customSpawnOffset ? bird.distance + customSpawnOffset : bird.distance + canvas.width + 100;
             pipes.push({ distance: spawnDistance, top: topHeight, bottom: topHeight + gap, width: 70, passed: false });
             
             if (getDeterministicRandom(pipeCount + 1000) > 0.5) {
@@ -356,11 +355,12 @@
         }
 
         function spawnParticles(x, y, color) {
-            for(let i=0; i<10; i++) {
+            for(let i=0; i<25; i++) { // Больше партиклов
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
-                    life: 1.0, color: color
+                    vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, // Сильнее разлетаются
+                    life: 1.0, color: color, 
+                    size: Math.random() * 8 + 4 // Сделал их крупнее
                 });
             }
         }
@@ -375,7 +375,6 @@
             document.getElementById('leaderboard').innerHTML = html;
         }
 
-        // --- DRAWING ---
         function drawBird(x, y, rotation, pColor, pSkin, isGhost, name) {
             ctx.save();
             ctx.translate(x, y);
@@ -412,7 +411,6 @@
 
         function update() {
             if (gameState === 'menu') {
-                // Background animation in menu
                 bgOffset += 0.5;
                 let bgGrad = ctx.createLinearGradient(0, bgOffset % canvas.height, 0, (bgOffset % canvas.height) + canvas.height);
                 bgGrad.addColorStop(0, '#1a1a2e'); bgGrad.addColorStop(1, '#16213e');
@@ -443,30 +441,31 @@
 
                 if (bird.y + bird.size >= canvas.height || bird.y - bird.size <= 0) die();
 
-                // Adaptive pipe spawn based on screen width
-                let spawnInterval = Math.max(300, canvas.width * 0.4); 
-                if (bird.distance % Math.floor(spawnInterval) < speed) addPipe();
+                // Правильный спавн новых труб с учетом дистанции
+                let spawnInterval = Math.max(280, canvas.width * 0.45); 
+                let lastPipeDistance = pipes.length > 0 ? pipes[pipes.length-1].distance : 0;
+                if (bird.distance + canvas.width + 100 - lastPipeDistance > spawnInterval) {
+                    addPipe();
+                }
 
-                // Logic Pipes
+                // Логика Труб
                 for (let i = pipes.length - 1; i >= 0; i--) {
                     let p = pipes[i];
                     let screenX = p.distance - bird.distance + bird.x; 
 
-                    // Hitbox
                     if (bird.x + bird.size - 4 > screenX && bird.x - bird.size + 4 < screenX + p.width &&
                         (bird.y - bird.size + 4 < p.top || bird.y + bird.size - 4 > p.bottom)) die();
 
-                    // Pass Pipe
                     if (screenX + p.width < bird.x && !p.passed) {
                         bird.score++; p.passed = true;
                         playSound('score');
-                        spawnParticles(bird.x, bird.y, '#FFEB3B'); // Эффект пролета
+                        spawnParticles(bird.x, bird.y, '#FFEB3B');
                         updateLeaderboard();
                     }
                     if (screenX + p.width < -100) pipes.splice(i, 1);
                 }
 
-                // Logic Coins
+                // Логика Монет
                 for (let i = coinsArr.length - 1; i >= 0; i--) {
                     let c = coinsArr[i];
                     let screenX = c.distance - bird.distance + bird.x;
@@ -477,14 +476,14 @@
                         localStorage.setItem('coins', savedCoins);
                         document.getElementById('gameCoins').innerText = savedCoins;
                         playSound('coin');
-                        spawnParticles(screenX, c.y, '#FFD700'); // Золотые брызги
-                        floatingTexts.push({ x: bird.x, y: bird.y - 20, text: '+1', alpha: 1.0 }); // Всплывающий текст
+                        spawnParticles(screenX, c.y, '#FFD700');
+                        floatingTexts.push({ x: bird.x, y: bird.y - 20, text: '+1', alpha: 1.0 });
                     }
                     if (screenX < -100) coinsArr.splice(i, 1);
                 }
             }
 
-            // Draw Pipes (Вернул красивый дизайн)
+            // Отрисовка Труб
             pipes.forEach(p => {
                 let screenX = p.distance - bird.distance + bird.x;
                 
@@ -492,15 +491,12 @@
                 pipeGrad.addColorStop(0, '#558B2F'); pipeGrad.addColorStop(0.5, '#8BC34A'); pipeGrad.addColorStop(1, '#33691E');
                 ctx.fillStyle = pipeGrad;
 
-                // Основная труба
                 ctx.fillRect(screenX, 0, p.width, p.top);
                 ctx.fillRect(screenX, p.bottom, p.width, canvas.height - p.bottom);
                 
-                // Шапки
                 ctx.fillRect(screenX - 5, p.top - 25, p.width + 10, 25);
                 ctx.fillRect(screenX - 5, p.bottom, p.width + 10, 25);
                 
-                // Обводка
                 ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
                 ctx.strokeRect(screenX, 0, p.width, p.top);
                 ctx.strokeRect(screenX, p.bottom, p.width, canvas.height - p.bottom);
@@ -508,40 +504,42 @@
                 ctx.strokeRect(screenX - 5, p.bottom, p.width + 10, 25);
             });
 
-            // Draw Coins
+            // Отрисовка Монет (фикс значка $)
             coinsArr.forEach(c => {
                 if(!c.collected) {
                     let screenX = c.distance - bird.distance + bird.x;
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(screenX, c.y, 16, 0, Math.PI*2); ctx.fill();
                     ctx.lineWidth = 2; ctx.strokeStyle = '#B8860B'; ctx.stroke();
-                    ctx.fillStyle = '#DAA520'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.fillText('$', screenX, c.y+6);
+                    ctx.fillStyle = '#DAA520'; ctx.font = 'bold 20px Arial'; 
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; // Центровка значка доллара
+                    ctx.fillText('$', screenX, c.y + 2);
                 }
             });
 
-            // Draw Particles
+            // Отрисовка Партиклов (фикс размера)
             for (let i = particles.length - 1; i >= 0; i--) {
                 let pt = particles[i];
-                pt.x += pt.vx; pt.y += pt.vy; pt.life -= 0.05;
+                pt.x += pt.vx; pt.y += pt.vy; pt.life -= 0.04;
                 if (pt.life <= 0) { particles.splice(i, 1); continue; }
                 ctx.globalAlpha = pt.life;
                 ctx.fillStyle = pt.color;
-                ctx.fillRect(pt.x, pt.y, 5, 5);
+                ctx.fillRect(pt.x, pt.y, pt.size, pt.size); // Рисуем квадраты покрупнее
                 ctx.globalAlpha = 1.0;
             }
 
-            // Draw Floating Texts (+1 coin)
+            // Отрисовка Всплывающего текста
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 let ft = floatingTexts[i];
                 ft.y -= 2; ft.alpha -= 0.02;
                 if (ft.alpha <= 0) { floatingTexts.splice(i, 1); continue; }
                 ctx.globalAlpha = ft.alpha;
                 ctx.fillStyle = '#FFD700'; ctx.strokeStyle = 'black'; ctx.lineWidth = 3;
-                ctx.font = '24px Fredoka One'; ctx.textAlign = 'center';
+                ctx.font = '24px Fredoka One'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.strokeText(ft.text, ft.x, ft.y); ctx.fillText(ft.text, ft.x, ft.y);
                 ctx.globalAlpha = 1.0;
             }
 
-            // Draw Other Players
+            // Отрисовка других игроков
             for (let id in players) {
                 if (id !== myId && players[id].alive) {
                     let p = players[id];
@@ -552,7 +550,7 @@
                 }
             }
 
-            // Draw Self
+            // Отрисовка Себя
             if (gameState !== 'dead') {
                 let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (bird.velocity * 0.1)));
                 drawBird(bird.x, bird.y, rotation, myColor, mySkin, false);
@@ -560,18 +558,18 @@
                 ctx.font = '50px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('💥', bird.x, bird.y);
             }
 
-            // Draw Score
+            // Отрисовка Счета
             if (gameState === 'playing') {
                 ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 8;
-                ctx.font = '80px Fredoka One'; ctx.textAlign = 'center';
+                ctx.font = '80px Fredoka One'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
                 ctx.strokeText(bird.score, canvas.width / 2, 100); ctx.fillText(bird.score, canvas.width / 2, 100);
             }
 
-            // Dead Screen
+            // Экран смерти
             if (gameState === 'dead') {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "white"; ctx.textAlign = 'center';
-                ctx.strokeStyle = "black"; ctx.lineWidth = 4;
+                ctx.strokeStyle = "black"; ctx.lineWidth = 4; ctx.textBaseline = 'alphabetic';
                 
                 ctx.font = "50px Fredoka One"; 
                 ctx.strokeText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
