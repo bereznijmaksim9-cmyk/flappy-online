@@ -3,7 +3,7 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
- Указываем папку, где будет лежать игра (index.html)
+ // Указываем папку, где будет лежать игра (index.html)
 app.use(express.static('public'));
 
 const rooms = {};
