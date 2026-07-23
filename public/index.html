@@ -8,95 +8,54 @@
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
         
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Fredoka One', cursive;
-            background-color: #222;
-            color: white;
-            user-select: none;
+            margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Fredoka One', cursive; background-color: #222;
+            color: white; user-select: none; touch-action: none;
         }
 
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
+        canvas { display: block; width: 100vw; height: 100vh; }
 
-        /* Красивое меню */
         #menu {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+            padding: 30px; border-radius: 20px; text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2);
             z-index: 10;
         }
 
         #menu h1 { margin-top: 0; color: #ffeb3b; text-shadow: 2px 2px 0px #000; }
         
         input {
-            width: 90%;
-            padding: 12px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Fredoka One', cursive;
-            text-align: center;
-            outline: none;
+            width: 90%; padding: 12px; margin: 10px 0; border: none;
+            border-radius: 10px; font-size: 16px; font-family: 'Fredoka One', cursive;
+            text-align: center; outline: none; box-sizing: border-box;
         }
 
         button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 15px;
-            font-family: 'Fredoka One', cursive;
-            transition: transform 0.1s;
+            background: #4CAF50; color: white; border: none; padding: 12px 25px;
+            font-size: 18px; border-radius: 10px; cursor: pointer; margin-top: 15px;
+            font-family: 'Fredoka One', cursive; transition: transform 0.1s;
             box-shadow: 0 4px 0 #2E7D32;
         }
         button:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Игровой интерфейс */
         #game-ui {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            display: none;
-            z-index: 5;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none; z-index: 5;
         }
 
         #leave-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #E53935;
-            box-shadow: 0 4px 0 #B71C1C;
-            pointer-events: auto;
-            padding: 8px 15px;
-            font-size: 14px;
+            position: absolute; top: 15px; right: 15px;
+            background: #E53935; box-shadow: 0 4px 0 #B71C1C;
+            pointer-events: auto; padding: 8px 15px; font-size: 14px;
         }
 
         #leaderboard {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 18px;
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0, 0, 0, 0.5); padding: 15px;
+            border-radius: 15px; font-size: 18px;
         }
+        
         .player-score { margin: 5px 0; }
         .dead-text { color: #ff5252; font-size: 14px; }
         .my-score { color: #69f0ae; }
@@ -105,16 +64,16 @@
 <body>
 
     <div id="menu">
-        <h1>Flappy Online 🐦</h1>
+        <h1>Flappy Online</h1>
         <input type="text" id="playerName" placeholder="Твой никнейм" maxlength="10">
-        <input type="text" id="roomId" placeholder="Код комнаты (любой)">
+        <input type="text" id="roomId" placeholder="Код комнаты">
         <br>
         <button onclick="joinGame()">ВРЫВАЕМСЯ!</button>
     </div>
 
     <div id="game-ui">
         <div id="leaderboard"></div>
-        <button id="leave-btn" onclick="leaveGame()">Выйти в меню</button>
+        <button id="leave-btn" onclick="leaveGame()">Выйти</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -122,28 +81,24 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        
-        // Переменные интерфейса
         const menu = document.getElementById('menu');
         const gameUI = document.getElementById('game-ui');
         const leaderboard = document.getElementById('leaderboard');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Глобальные переменные
         let myId = '';
-        let myName = '';
         let currentRoom = '';
         let players = {}; 
         
-        // Игровые переменные
-        let bird = { x: 50, y: 150, velocity: 0, gravity: 0.5, jump: -8, size: 24, alive: false, score: 0 };
+        let gameState = 'menu'; // menu, ready, playing, dead
+        let bird = { x: 0, y: 0, velocity: 0, gravity: 0.5, jump: -8, size: 16, score: 0 };
         let pipes = [];
         let frame = 0;
+        let pipeCount = 0;
         let gameLoop;
-        let isPlaying = false;
         
-        // Синтезатор звуков (Web Audio API)
+        // Синтезатор звуков
         let audioCtx;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -154,53 +109,46 @@
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
+            osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
+            
             if (type === 'jump') {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(300, now);
                 osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
                 osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'score') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(500, now);
                 osc.frequency.setValueAtTime(800, now + 0.1);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
             } else if (type === 'hit') {
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(150, now);
                 osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
             }
         }
 
-        // Подгоняем холст под экран
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            bird.x = canvas.width * 0.2; // Птица всегда на 20% от левого края
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // ------------------ СЕТЬ ------------------
-
+        // --- СЕТЬ ---
         socket.on('connect', () => { myId = socket.id; });
 
-        // Обновление полного списка игроков (при входе/выходе/смерти)
         socket.on('roomState', (serverPlayers) => {
             players = serverPlayers;
             updateLeaderboard();
         });
 
-        // Быстрое обновление координат других игроков
         socket.on('playerMoved', (data) => {
             if (players[data.id]) {
                 players[data.id].y = data.y;
@@ -210,30 +158,26 @@
             }
         });
 
-        // ------------------ ИНТЕРФЕЙС И УПРАВЛЕНИЕ ------------------
-
+        // --- ЛОГИКА ИГРЫ ---
         function joinGame() {
-            myName = document.getElementById('playerName').value.trim() || 'Гость';
+            let myName = document.getElementById('playerName').value.trim() || 'Гость';
             currentRoom = document.getElementById('roomId').value.trim() || 'main';
             
-            initAudio(); // Включаем звук по клику пользователя (правило браузеров)
-            
+            initAudio();
             socket.emit('joinRoom', { roomId: currentRoom, playerName: myName });
             
             menu.style.display = 'none';
             gameUI.style.display = 'block';
             
             resetGame();
-            isPlaying = true;
             gameLoop = requestAnimationFrame(update);
             
-            // Интервал для отправки наших координат на сервер (20 раз в секунду)
             window.networkInterval = setInterval(() => {
-                if(isPlaying) {
+                if(gameState === 'playing' || gameState === 'ready') {
                     socket.emit('updateState', { 
                         roomId: currentRoom, 
                         score: bird.score, 
-                        alive: bird.alive, 
+                        alive: (gameState !== 'dead'), 
                         y: Math.round(bird.y) 
                     });
                 }
@@ -241,93 +185,126 @@
         }
 
         function leaveGame() {
-            isPlaying = false;
+            gameState = 'menu';
             cancelAnimationFrame(gameLoop);
             clearInterval(window.networkInterval);
-            
             socket.emit('leaveRoom', { roomId: currentRoom });
-            
             gameUI.style.display = 'none';
             menu.style.display = 'block';
         }
 
         function resetGame() {
-            bird = { x: canvas.width * 0.2, y: canvas.height / 2, velocity: 0, gravity: 0.5, jump: -9, size: 20, alive: true, score: 0 };
+            bird.y = canvas.height / 2;
+            bird.velocity = 0;
+            bird.score = 0;
             pipes = [];
+            pipeCount = 0;
             frame = 0;
-            // Создаем первую трубу сразу
-            addPipe();
+            gameState = 'ready'; // Ждем первого клика
         }
 
         function flap() {
-            if (!isPlaying) return;
-            if (bird.alive) {
+            if (gameState === 'menu') return;
+            
+            if (gameState === 'ready') {
+                gameState = 'playing'; // Запускаем игру по первому клику
                 bird.velocity = bird.jump;
                 playSound('jump');
-            } else {
-                // Если мертв, тап рестартит игру
+            } else if (gameState === 'playing') {
+                bird.velocity = bird.jump;
+                playSound('jump');
+            } else if (gameState === 'dead') {
                 resetGame();
             }
         }
 
-        // Поддержка клика, тапа и пробела
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') flap(); });
         window.addEventListener('touchstart', flap);
-        window.addEventListener('mousedown', (e) => {
-            // Чтобы кнопка выхода не вызывала прыжок
-            if(e.target.id !== 'leave-btn') flap(); 
-        });
+        window.addEventListener('mousedown', (e) => { if(e.target.id !== 'leave-btn') flap(); });
 
         function updateLeaderboard() {
             let html = '';
-            // Сортируем по очкам
             let sortedIds = Object.keys(players).sort((a, b) => players[b].score - players[a].score);
             
             sortedIds.forEach(id => {
                 let p = players[id];
                 let isMe = id === myId;
-                let status = p.alive ? '' : ' <span class="dead-text">(Разбился)</span>';
+                let status = p.alive ? '' : ' <span class="dead-text">💀</span>';
                 html += `<div class="player-score ${isMe ? 'my-score' : ''}">${p.name}: ${p.score}${status}</div>`;
             });
             leaderboard.innerHTML = html;
         }
 
-        // ------------------ ИГРОВАЯ ЛОГИКА И ОТРИСОВКА ------------------
+        // Детерминированный генератор чисел (чтобы трубы были одинаковыми у всех)
+        function getDeterministicRandom(index) {
+            let seed = 0;
+            for(let i = 0; i < currentRoom.length; i++) seed += currentRoom.charCodeAt(i);
+            let x = Math.sin(seed + index * 1.2345) * 10000;
+            return x - Math.floor(x);
+        }
 
         function addPipe() {
-            let gap = 170; // Расстояние между верхней и нижней трубой
-            let topHeight = Math.random() * (canvas.height - gap - 100) + 50;
+            let gap = Math.max(160, canvas.height * 0.25); // Адаптивный зазор под экран
+            let minHeight = 60;
+            let maxHeight = canvas.height - gap - minHeight;
+            if (maxHeight < minHeight) maxHeight = minHeight + 10;
+
+            let rand = getDeterministicRandom(pipeCount);
+            let topHeight = rand * (maxHeight - minHeight) + minHeight;
+
             pipes.push({
-                x: canvas.width,
+                x: canvas.width + 100, // Спавн за экраном
                 top: topHeight,
                 bottom: topHeight + gap,
                 width: 60,
                 passed: false
             });
+            pipeCount++;
+        }
+
+        // --- ОТРИСОВКА ---
+        function drawBird(x, y, rotation, isGhost, name) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.globalAlpha = isGhost ? 0.4 : 1.0;
+
+            // Тело птички (рисуем кодом, чтобы не было багов ОС)
+            ctx.fillStyle = '#FFEB3B';
+            ctx.beginPath(); ctx.arc(0, 0, bird.size, 0, Math.PI*2); ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = 'black'; ctx.stroke();
+
+            // Глаз
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(6, -6, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(8, -6, 2, 0, Math.PI*2); ctx.fill();
+
+            // Клюв
+            ctx.fillStyle = '#FF9800';
+            ctx.beginPath(); ctx.arc(10, 4, 8, -Math.PI/4, Math.PI/4); ctx.fill(); ctx.stroke();
+
+            ctx.restore();
+
+            // Никнейм над призраком
+            if (isGhost && name) {
+                ctx.fillStyle = 'white'; ctx.font = '14px Fredoka One'; ctx.textAlign = 'center';
+                ctx.fillText(name, x, y - 25);
+            }
         }
 
         function drawPipes() {
             pipes.forEach(p => {
-                // Градиент для красивых труб
                 let grad = ctx.createLinearGradient(p.x, 0, p.x + p.width, 0);
-                grad.addColorStop(0, '#558B2F');
-                grad.addColorStop(0.5, '#8BC34A');
-                grad.addColorStop(1, '#33691E');
+                grad.addColorStop(0, '#558B2F'); grad.addColorStop(0.5, '#8BC34A'); grad.addColorStop(1, '#33691E');
                 ctx.fillStyle = grad;
 
-                // Верхняя труба
                 ctx.fillRect(p.x, 0, p.width, p.top);
-                // Ободок верхней трубы
                 ctx.fillRect(p.x - 5, p.top - 20, p.width + 10, 20);
-
-                // Нижняя труба
                 ctx.fillRect(p.x, p.bottom, p.width, canvas.height - p.bottom);
-                // Ободок нижней трубы
                 ctx.fillRect(p.x - 5, p.bottom, p.width + 10, 20);
                 
-                // Контуры
-                ctx.strokeStyle = '#222';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
                 ctx.strokeRect(p.x, 0, p.width, p.top);
                 ctx.strokeRect(p.x - 5, p.top - 20, p.width + 10, 20);
                 ctx.strokeRect(p.x, p.bottom, p.width, canvas.height - p.bottom);
@@ -336,80 +313,65 @@
         }
 
         function drawPlayers() {
-            ctx.font = '40px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // Рисуем других игроков (призраками)
             for (let id in players) {
                 if (id !== myId && players[id].alive) {
-                    ctx.globalAlpha = 0.5; // Полупрозрачность
-                    // Они летят на той же оси X, что и мы, но по своему Y
-                    ctx.fillText('👻', bird.x, players[id].y);
-                    
-                    // Рисуем имя над призраком
-                    ctx.font = '14px Fredoka One';
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(players[id].name, bird.x, players[id].y - 30);
-                    ctx.globalAlpha = 1.0;
-                    ctx.font = '40px Arial';
+                    drawBird(bird.x, players[id].y, 0, true, players[id].name);
                 }
             }
 
-            // Рисуем себя
-            if (bird.alive) {
-                ctx.save();
-                ctx.translate(bird.x, bird.y);
-                // Наклоняем птичку в зависимости от скорости падения
+            if (gameState !== 'dead') {
                 let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (bird.velocity * 0.1)));
-                ctx.rotate(rotation);
-                ctx.fillText('🐦', 0, 0);
-                ctx.restore();
+                drawBird(bird.x, bird.y, rotation, false);
             } else {
+                ctx.font = '40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText('💥', bird.x, bird.y);
             }
         }
 
-        function drawBackground() {
-            // Красивый градиент неба
-            let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            bgGrad.addColorStop(0, '#4fc3f7');
-            bgGrad.addColorStop(1, '#e1f5fe');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
         function update() {
-            if (!isPlaying) return;
+            if (gameState === 'menu') return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Фон
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGrad.addColorStop(0, '#4fc3f7'); bgGrad.addColorStop(1, '#e1f5fe');
+            ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Логика самой игры
-            if (bird.alive) {
+            // Состояние "ГОТОВ" (птичка висит в воздухе)
+            if (gameState === 'ready') {
+                bird.y = canvas.height / 2 + Math.sin(Date.now() / 200) * 10;
+                drawPlayers();
+                
+                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 4;
+                ctx.font = '40px Fredoka One'; ctx.textAlign = 'center';
+                ctx.strokeText('ТАПНИ ЧТОБЫ НАЧАТЬ', canvas.width/2, canvas.height/2 + 80);
+                ctx.fillText('ТАПНИ ЧТОБЫ НАЧАТЬ', canvas.width/2, canvas.height/2 + 80);
+                
+                gameLoop = requestAnimationFrame(update);
+                return;
+            }
+
+            // Игровая логика
+            if (gameState === 'playing') {
                 bird.velocity += bird.gravity;
                 bird.y += bird.velocity;
 
-                // Удар об пол или потолок
-                if (bird.y + bird.size >= canvas.height || bird.y - bird.size <= 0) {
-                    die();
-                }
+                if (bird.y + bird.size >= canvas.height || bird.y - bird.size <= 0) die();
 
-                // Добавление новых труб
+                // Спавн первой и последующих труб (первая труба заспавнится через 1.5 сек после клика)
                 if (frame % 100 === 0) addPipe();
 
-                // Движение труб
                 for (let i = pipes.length - 1; i >= 0; i--) {
                     let p = pipes[i];
                     p.x -= 4; // Скорость игры
 
-                    // Проверка столкновений
                     if (
-                        bird.x + bird.size - 10 > p.x && 
-                        bird.x - bird.size + 10 < p.x + p.width &&
-                        (bird.y - bird.size + 10 < p.top || bird.y + bird.size - 10 > p.bottom)
-                    ) {
-                        die();
-                    }
+                        bird.x + bird.size - 4 > p.x && 
+                        bird.x - bird.size + 4 < p.x + p.width &&
+                        (bird.y - bird.size + 4 < p.top || bird.y + bird.size - 4 > p.bottom)
+                    ) die();
 
-                    // Проход трубы (получение очка)
                     if (p.x + p.width < bird.x && !p.passed) {
                         bird.score++;
                         p.passed = true;
@@ -417,42 +379,37 @@
                         updateLeaderboard();
                     }
 
-                    // Удаление труб, ушедших за экран
-                    if (p.x + p.width < 0) {
-                        pipes.splice(i, 1);
-                    }
+                    if (p.x + p.width < 0) pipes.splice(i, 1);
                 }
                 frame++;
             }
 
-            // Отрисовка
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
             drawPipes();
             drawPlayers();
 
-            if (!bird.alive) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "white";
-                ctx.font = "30px Fredoka One";
-                ctx.fillText("ИГРА ОКОНЧЕНА", canvas.width / 2, canvas.height / 2 - 20);
-                ctx.font = "20px Fredoka One";
-                ctx.fillText("Нажми чтобы попробовать снова", canvas.width / 2, canvas.height / 2 + 20);
+            // Крупный счет по центру экрана
+            if (gameState === 'playing') {
+                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 6;
+                ctx.font = '80px Fredoka One'; ctx.textAlign = 'center';
+                ctx.strokeText(bird.score, canvas.width / 2, 120);
+                ctx.fillText(bird.score, canvas.width / 2, 120);
+            }
+
+            if (gameState === 'dead') {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white"; ctx.textAlign = 'center';
+                ctx.font = "40px Fredoka One"; ctx.fillText("ИГРА ОКОНЧЕНА", canvas.width / 2, canvas.height / 2 - 20);
+                ctx.font = "20px Fredoka One"; ctx.fillText("Тапни чтобы попробовать снова", canvas.width / 2, canvas.height / 2 + 30);
             }
 
             gameLoop = requestAnimationFrame(update);
         }
 
         function die() {
-            if (bird.alive) playSound('hit');
-            bird.alive = false;
-            // Немедленно сообщаем серверу о смерти, чтобы другие увидели
+            if (gameState === 'playing') playSound('hit');
+            gameState = 'dead';
             socket.emit('updateState', { 
-                roomId: currentRoom, 
-                score: bird.score, 
-                alive: false, 
-                y: Math.round(bird.y) 
+                roomId: currentRoom, score: bird.score, alive: false, y: Math.round(bird.y) 
             });
             updateLeaderboard();
         }
