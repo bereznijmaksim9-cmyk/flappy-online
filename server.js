@@ -3,34 +3,48 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-// Указываем папку, где будет лежать игра (index.html)
 app.use(express.static('public'));
 
 const rooms = {};
 
 io.on('connection', (socket) => {
+    // Подключение к комнате
     socket.on('joinRoom', ({ roomId, playerName }) => {
         socket.join(roomId);
         if (!rooms[roomId]) rooms[roomId] = { players: {} };
         
-        rooms[roomId].players[socket.id] = { name: playerName, score: 0, alive: true };
+        rooms[roomId].players[socket.id] = { name: playerName, score: 0, alive: true, y: 250 };
         io.to(roomId).emit('roomState', rooms[roomId].players);
     });
 
-    socket.on('scoreUpdate', ({ roomId, score }) => {
+    // Постоянное обновление состояния (координаты, жизнь, счет)
+    socket.on('updateState', (data) => {
+        const { roomId, score, alive, y } = data;
         if (rooms[roomId] && rooms[roomId].players[socket.id]) {
             rooms[roomId].players[socket.id].score = score;
-            io.to(roomId).emit('roomState', rooms[roomId].players);
+            rooms[roomId].players[socket.id].alive = alive;
+            rooms[roomId].players[socket.id].y = y;
+            
+            // Рассылаем всем остальным в комнате, чтобы они видели твой полет
+            socket.to(roomId).emit('playerMoved', { 
+                id: socket.id, 
+                score: score, 
+                alive: alive, 
+                y: y 
+            });
         }
     });
 
-    socket.on('playerDied', ({ roomId }) => {
+    // Кнопка выхода из комнаты
+    socket.on('leaveRoom', ({ roomId }) => {
+        socket.leave(roomId);
         if (rooms[roomId] && rooms[roomId].players[socket.id]) {
-            rooms[roomId].players[socket.id].alive = false;
+            delete rooms[roomId].players[socket.id];
             io.to(roomId).emit('roomState', rooms[roomId].players);
         }
     });
 
+    // Отключение от сервера (закрыл вкладку/приложение)
     socket.on('disconnect', () => {
         for (const roomId in rooms) {
             if (rooms[roomId]?.players[socket.id]) {
@@ -41,6 +55,5 @@ io.on('connection', (socket) => {
     });
 });
 
-// Используем порт среды (для хостинга) или 3000 локально
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
