@@ -1,78 +1,121 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flappy PRO + Shop</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
-        body { margin: 0; background: #111; color: white; font-family: 'Fredoka One', cursive; overflow: hidden; touch-action: none; user-select: none; }
+        
+        body { 
+            margin: 0; background: #111; color: white; 
+            font-family: 'Fredoka One', cursive; overflow: hidden; 
+            touch-action: none; user-select: none;
+        }
         canvas { display: block; width: 100vw; height: 100vh; }
         
-        .panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 30px; border-radius: 20px; text-align: center; border: 2px solid #555; z-index: 10; width: 300px; max-height: 80vh; overflow-y: auto; }
-        h1, h2 { margin-top: 0; color: #ffeb3b; }
-        input, button { width: 90%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; font-family: inherit; font-size: 16px; outline: none; }
-        button { background: #4CAF50; color: white; cursor: pointer; border-bottom: 4px solid #2E7D32; }
-        button:active { transform: translateY(4px); border-bottom: 0; margin-bottom: 12px; }
+        /* Анимация левитации меню */
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-10px); }
+            100% { transform: translate(-50%, -50%) translateY(0px); }
+        }
+
+        .panel { 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: rgba(15, 15, 25, 0.85); backdrop-filter: blur(8px);
+            padding: 30px; border-radius: 20px; text-align: center; 
+            border: 2px solid #444; z-index: 10; width: 320px; 
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        h1, h2 { margin-top: 0; color: #ffeb3b; text-shadow: 2px 2px 0 #000; }
+        h3 { color: #4fc3f7; border-bottom: 2px solid #333; padding-bottom: 5px; }
         
-        .room-item { background: #333; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid #555; }
-        .room-item:hover { background: #444; }
-        .shop-item { background: #333; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+        input, button { 
+            width: 90%; padding: 12px; margin: 8px 0; 
+            border-radius: 10px; border: none; font-family: inherit; 
+            font-size: 16px; outline: none; transition: 0.2s;
+        }
+        
+        input { background: #222; color: #fff; border: 2px solid #444; text-align: center; }
+        input:focus { border-color: #4fc3f7; }
+
+        button { 
+            background: #4CAF50; color: white; cursor: pointer; 
+            border-bottom: 4px solid #2E7D32; font-weight: bold;
+        }
+        button:hover { filter: brightness(1.1); }
+        button:active { transform: translateY(4px); border-bottom: 0px; margin-bottom: 12px; }
+        
+        .room-item { 
+            background: #2a2a35; padding: 12px; border-radius: 8px; 
+            margin-bottom: 8px; cursor: pointer; display: flex; 
+            justify-content: space-between; border: 1px solid #444;
+            transition: 0.2s;
+        }
+        .room-item:hover { background: #3f3f5a; transform: scale(1.02); }
+        .shop-item { background: #2a2a35; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #444; }
         
         #game-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 5; }
-        .hud-box { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; font-size: 16px; margin: 10px; pointer-events: auto; }
+        .hud-box { background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 10px; font-size: 18px; margin: 10px; pointer-events: auto; text-shadow: 1px 1px 0 #000; }
         #top-left { position: absolute; top: 10px; left: 10px; }
-        #top-right { position: absolute; top: 10px; right: 10px; }
-        #leave-btn { background: #E53935; border-bottom-color: #B71C1C; padding: 5px 15px; width: auto; margin: 0; }
+        #top-right { position: absolute; top: 10px; right: 10px; text-align: right; }
+        #leave-btn { background: #E53935; border-bottom-color: #B71C1C; padding: 8px 15px; width: auto; margin-top: 10px; font-size: 14px; }
         
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- ГЛАВНОЕ МЕНЮ -->
+    <!-- MAIN MENU -->
     <div id="menu" class="panel">
         <h1>Flappy Online</h1>
-        <div>💰 Монеты: <span id="menuCoins">0</span></div>
-        <div>🏆 Рекорд: <span id="menuRecord">0</span></div>
+        <div>💰 Coins: <span id="menuCoins">0</span></div>
+        <div>🏆 Best Score: <span id="menuRecord">0</span></div>
         
-        <input type="text" id="playerName" placeholder="Твой никнейм" maxlength="10">
+        <input type="text" id="playerName" placeholder="Your Nickname" maxlength="12">
         
-        <h3>Лобби</h3>
-        <div id="roomList">Загрузка лобби...</div>
+        <h3>Active Lobbies</h3>
+        <div id="roomList">Loading lobbies...</div>
         
-        <input type="text" id="newRoomId" placeholder="Название новой комнаты">
-        <button onclick="createRoom()">Создать и Играть</button>
-        <button onclick="toggleShop()" style="background:#FF9800; border-color:#F57C00;">🛒 Магазин скинов</button>
+        <input type="text" id="newRoomId" placeholder="Custom Room Name">
+        <button onclick="createRoom()">Create & Play</button>
+        <button onclick="toggleShop()" style="background:#FF9800; border-bottom-color:#F57C00;">🛒 Skin Shop</button>
     </div>
 
-    <!-- МАГАЗИН -->
+    <!-- SHOP -->
     <div id="shop" class="panel hidden">
-        <h2>Магазин</h2>
-        <div>💰 Монеты: <span id="shopCoins">0</span></div>
+        <h2>Skin Shop</h2>
+        <div>💰 Coins: <span id="shopCoins">0</span></div>
+        
         <div class="shop-item">
-            <span>Радужный (50 💰)</span><br>
-            <button onclick="buySkin('rainbow', 50)">Купить / Надеть</button>
+            <span>Rainbow (50 💰)</span><br>
+            <button onclick="buySkin('rainbow', 50)">Buy / Equip</button>
         </div>
         <div class="shop-item">
-            <span>Зебра (100 💰)</span><br>
-            <button onclick="buySkin('zebra', 100)">Купить / Надеть</button>
+            <span>Zebra (100 💰)</span><br>
+            <button onclick="buySkin('zebra', 100)">Buy / Equip</button>
         </div>
         <div class="shop-item">
-            <span>Обычный</span><br>
-            <button onclick="equipSkin('default')">Надеть</button>
+            <span>Default Color</span><br>
+            <button onclick="equipSkin('default')">Equip</button>
         </div>
-        <button onclick="toggleShop()" style="background:#757575; border-color:#424242;">Назад</button>
+        
+        <button onclick="toggleShop()" style="background:#757575; border-bottom-color:#424242; margin-top: 20px;">Back to Menu</button>
     </div>
 
-    <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
+    <!-- GAME UI -->
     <div id="game-ui">
         <div id="top-left" class="hud-box">
             <div id="leaderboard"></div>
         </div>
         <div id="top-right">
             <div class="hud-box">💰 <span id="gameCoins">0</span></div>
-            <button id="leave-btn" onclick="leaveGame()">Выйти</button>
+            <button id="leave-btn" onclick="leaveGame()">Leave Match</button>
         </div>
     </div>
 
@@ -81,49 +124,86 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        
-        // Виртуальное разрешение (чтобы на всех экранах игра была одинаковой)
-        const VW = 400;
-        const VH = 600;
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let scale = 1;
 
-        // Данные игрока (Сохраняем в память телефона)
+        // Audio System
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'jump') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'score') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(800, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'coin') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.setValueAtTime(1200, now + 0.05);
+                osc.frequency.setValueAtTime(1600, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            }
+        }
+
+        // Player Data & Local Storage
         let savedCoins = parseInt(localStorage.getItem('coins')) || 0;
         let bestRecord = parseInt(localStorage.getItem('record')) || 0;
         let mySkin = localStorage.getItem('skin') || 'default';
         let unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins')) || ['default'];
-        
-        // Генерируем случайный цвет для обычной птицы, если нет скина
         let myColor = localStorage.getItem('color') || '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
         localStorage.setItem('color', myColor);
 
-        // Обновляем текст в меню
         document.getElementById('menuCoins').innerText = savedCoins;
         document.getElementById('menuRecord').innerText = bestRecord;
         document.getElementById('shopCoins').innerText = savedCoins;
 
+        // Game State Variables
         let myId = '', currentRoom = '', players = {};
-        let gameState = 'menu'; // menu, ready, playing, dead
+        let gameState = 'menu';
         let gameLoop, networkInterval;
-        let speed = 4; // Скорость скроллинга
+        let speed = 5; 
         
-        let bird = { x: 100, y: VH/2, velocity: 0, gravity: 0.5, jump: -8, size: 16, score: 0, distance: 0 };
+        let bird = { x: 0, y: 0, velocity: 0, gravity: 0.5, jump: -8, size: 16, score: 0, distance: 0 };
         let pipes = [];
         let coinsArr = [];
+        let particles = [];
+        let floatingTexts = [];
         let pipeCount = 0;
+        let bgOffset = 0; // Для анимации фона
 
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Вычисляем масштаб так, чтобы игра влезала в экран по высоте и ширине
-            scale = Math.min(window.innerWidth / VW, window.innerHeight / VH);
+            bird.x = Math.min(canvas.width * 0.2, 250); // Птица слева, но не уезжает слишком далеко на ПК
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // --- МАГАЗИН ---
+        // --- SHOP ---
         function toggleShop() {
             document.getElementById('menu').classList.toggle('hidden');
             document.getElementById('shop').classList.toggle('hidden');
@@ -140,9 +220,9 @@
                 document.getElementById('shopCoins').innerText = savedCoins;
                 document.getElementById('menuCoins').innerText = savedCoins;
                 equipSkin(skinId);
-                alert('Скин куплен!');
+                alert('Skin Purchased!');
             } else {
-                alert('Не хватает монет!');
+                alert('Not enough coins!');
             }
         }
 
@@ -150,19 +230,19 @@
             if (unlockedSkins.includes(skinId)) {
                 mySkin = skinId;
                 localStorage.setItem('skin', skinId);
-                alert('Скин надет!');
+                alert('Skin Equipped!');
             }
         }
 
-        // --- ЛОББИ И СЕТЬ ---
+        // --- NETWORK ---
         socket.on('connect', () => { myId = socket.id; });
 
         socket.on('roomList', (list) => {
             let html = '';
-            if(list.length === 0) html = '<p>Нет активных комнат</p>';
+            if(list.length === 0) html = '<p style="color:#aaa;">No active lobbies</p>';
             list.forEach(r => {
                 html += `<div class="room-item" onclick="joinRoom('${r.id}')">
-                            <span>🎮 ${r.id}</span> <span>Игроков: ${r.count}</span>
+                            <span>🎮 ${r.id}</span> <span>Players: ${r.count}</span>
                          </div>`;
             });
             document.getElementById('roomList').innerHTML = html;
@@ -172,7 +252,7 @@
         socket.on('playerMoved', (data) => {
             if (players[data.id]) {
                 players[data.id].y = data.y;
-                players[data.id].distance = data.distance; // Синхронизируем дистанцию!
+                players[data.id].distance = data.distance; 
                 players[data.id].score = data.score;
                 players[data.id].alive = data.alive;
                 updateLeaderboard();
@@ -181,13 +261,14 @@
 
         function createRoom() {
             let id = document.getElementById('newRoomId').value.trim();
-            if(!id) id = 'Комната_' + Math.floor(Math.random()*1000);
+            if(!id) id = 'Room_' + Math.floor(Math.random()*1000);
             joinRoom(id);
         }
 
         function joinRoom(roomId) {
-            let name = document.getElementById('playerName').value.trim() || 'Игрок';
+            let name = document.getElementById('playerName').value.trim() || 'Player';
             currentRoom = roomId;
+            initAudio();
             socket.emit('joinRoom', { roomId, playerName: name, color: myColor, skin: mySkin });
             
             document.getElementById('menu').classList.add('hidden');
@@ -214,24 +295,42 @@
             document.getElementById('menu').classList.remove('hidden');
         }
 
-        // --- ЛОГИКА ---
+        // --- GAME LOGIC ---
         function resetGame() {
-            bird = { x: 100, y: VH/2, velocity: 0, gravity: 0.5, jump: -8, size: 16, score: 0, distance: 0 };
-            pipes = []; coinsArr = []; pipeCount = 0;
+            bird.y = canvas.height / 2;
+            bird.velocity = 0;
+            bird.score = 0;
+            bird.distance = 0;
+            pipes = []; coinsArr = []; particles = []; floatingTexts = [];
+            pipeCount = 0;
             document.getElementById('gameCoins').innerText = savedCoins;
             gameState = 'ready';
         }
 
-        function flap() {
-            if (gameState === 'menu') return;
-            if (gameState === 'ready') gameState = 'playing';
-            if (gameState === 'playing' || gameState === 'ready') bird.velocity = bird.jump;
-            if (gameState === 'dead') resetGame();
+        let lastFlap = 0;
+        function flap(e) {
+            if (e && e.type === 'touchstart') e.preventDefault(); // ФИКС ДВОЙНОГО КЛИКА
+            if (gameState === 'menu' || e?.target?.id === 'leave-btn') return;
+            
+            let now = Date.now();
+            if (now - lastFlap < 100) return; // Троттлинг кликов
+            lastFlap = now;
+
+            if (gameState === 'ready') {
+                gameState = 'playing';
+                playSound('jump');
+                bird.velocity = bird.jump;
+            } else if (gameState === 'playing') {
+                playSound('jump');
+                bird.velocity = bird.jump;
+            } else if (gameState === 'dead') {
+                resetGame();
+            }
         }
 
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') flap(); });
-        window.addEventListener('touchstart', flap);
-        window.addEventListener('mousedown', (e) => { if(e.target.id !== 'leave-btn') flap(); });
+        window.addEventListener('touchstart', flap, { passive: false });
+        window.addEventListener('mousedown', flap);
 
         function getDeterministicRandom(index) {
             let seed = 0;
@@ -241,20 +340,29 @@
         }
 
         function addPipe() {
-            let gap = 150;
-            let minHeight = 50;
-            let maxHeight = VH - gap - minHeight;
+            let gap = Math.max(160, canvas.height * 0.2); // Динамический разрыв
+            let minHeight = 80;
+            let maxHeight = canvas.height - gap - minHeight;
             let rand = getDeterministicRandom(pipeCount);
             let topHeight = rand * (maxHeight - minHeight) + minHeight;
 
-            let spawnDistance = bird.distance + VW; // Спавним за экраном
-            pipes.push({ distance: spawnDistance, top: topHeight, bottom: topHeight + gap, width: 60, passed: false });
+            let spawnDistance = bird.distance + canvas.width + 100; // Спавн за экраном с запасом
+            pipes.push({ distance: spawnDistance, top: topHeight, bottom: topHeight + gap, width: 70, passed: false });
             
-            // С шансом 50% спавним монетку между трубами
             if (getDeterministicRandom(pipeCount + 1000) > 0.5) {
-                coinsArr.push({ distance: spawnDistance + 20, y: topHeight + gap/2, collected: false });
+                coinsArr.push({ distance: spawnDistance + 35, y: topHeight + gap/2, collected: false });
             }
             pipeCount++;
+        }
+
+        function spawnParticles(x, y, color) {
+            for(let i=0; i<10; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+                    life: 1.0, color: color
+                });
+            }
         }
 
         function updateLeaderboard() {
@@ -262,21 +370,20 @@
             let sortedIds = Object.keys(players).sort((a, b) => players[b].score - players[a].score);
             sortedIds.forEach(id => {
                 let p = players[id];
-                html += `<div style="color:${p.color}">${p.name}: ${p.score} ${p.alive?'':'💀'}</div>`;
+                html += `<div style="color:${p.color}; margin-bottom: 4px;">${p.name}: ${p.score} ${p.alive?'':'💀'}</div>`;
             });
             document.getElementById('leaderboard').innerHTML = html;
         }
 
-        // --- ОТРИСОВКА ---
+        // --- DRAWING ---
         function drawBird(x, y, rotation, pColor, pSkin, isGhost, name) {
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate(rotation);
-            ctx.globalAlpha = isGhost ? 0.5 : 1.0;
+            ctx.globalAlpha = isGhost ? 0.4 : 1.0;
 
             ctx.beginPath(); ctx.arc(0, 0, bird.size, 0, Math.PI*2);
             
-            // Применяем скины
             if (pSkin === 'rainbow') {
                 let grad = ctx.createLinearGradient(-16, -16, 16, 16);
                 grad.addColorStop(0, "red"); grad.addColorStop(0.33, "yellow"); grad.addColorStop(0.66, "green"); grad.addColorStop(1, "blue");
@@ -291,39 +398,40 @@
             
             ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'black'; ctx.stroke();
             
-            // Глаз
             ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(6, -6, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
             ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(8, -6, 2, 0, Math.PI*2); ctx.fill();
-            // Клюв
             ctx.fillStyle = '#FF9800'; ctx.beginPath(); ctx.arc(10, 4, 8, -Math.PI/4, Math.PI/4); ctx.fill(); ctx.stroke();
+            
             ctx.restore();
 
             if (isGhost && name) {
-                ctx.fillStyle = 'white'; ctx.font = '12px Fredoka One'; ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '14px Fredoka One'; ctx.textAlign = 'center';
                 ctx.fillText(name, x, y - 25);
             }
         }
 
         function update() {
-            if (gameState === 'menu') return;
+            if (gameState === 'menu') {
+                // Background animation in menu
+                bgOffset += 0.5;
+                let bgGrad = ctx.createLinearGradient(0, bgOffset % canvas.height, 0, (bgOffset % canvas.height) + canvas.height);
+                bgGrad.addColorStop(0, '#1a1a2e'); bgGrad.addColorStop(1, '#16213e');
+                ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                requestAnimationFrame(update);
+                return;
+            }
             
-            // Масштабируем холст
-            ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.translate(canvas.width/2 - (VW*scale)/2, canvas.height/2 - (VH*scale)/2);
-            ctx.scale(scale, scale);
             
-            // Фон (ограничен виртуальными размерами)
-            let bgGrad = ctx.createLinearGradient(0, 0, 0, VH);
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
             bgGrad.addColorStop(0, '#4fc3f7'); bgGrad.addColorStop(1, '#e1f5fe');
-            ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, VW, VH);
+            ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (gameState === 'ready') {
-                bird.y = VH / 2 + Math.sin(Date.now() / 200) * 10;
+                bird.y = canvas.height / 2 + Math.sin(Date.now() / 200) * 10;
                 drawBird(bird.x, bird.y, 0, myColor, mySkin, false);
-                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 4; ctx.font = '30px Fredoka One'; ctx.textAlign = 'center';
-                ctx.strokeText('ТАПНИ ЧТОБЫ НАЧАТЬ', VW/2, VH/2 + 80); ctx.fillText('ТАПНИ ЧТОБЫ НАЧАТЬ', VW/2, VH/2 + 80);
-                ctx.restore();
+                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 5; ctx.font = '40px Fredoka One'; ctx.textAlign = 'center';
+                ctx.strokeText('TAP TO START', canvas.width/2, canvas.height/2 + 80); ctx.fillText('TAP TO START', canvas.width/2, canvas.height/2 + 80);
                 gameLoop = requestAnimationFrame(update);
                 return;
             }
@@ -331,111 +439,157 @@
             if (gameState === 'playing') {
                 bird.velocity += bird.gravity;
                 bird.y += bird.velocity;
-                bird.distance += speed; // Двигаемся вперед!
+                bird.distance += speed;
 
-                if (bird.y + bird.size >= VH || bird.y - bird.size <= 0) die();
+                if (bird.y + bird.size >= canvas.height || bird.y - bird.size <= 0) die();
 
-                // Спавн труб по пройденной дистанции
-                if (bird.distance % 250 === 0) addPipe();
+                // Adaptive pipe spawn based on screen width
+                let spawnInterval = Math.max(300, canvas.width * 0.4); 
+                if (bird.distance % Math.floor(spawnInterval) < speed) addPipe();
 
-                // Логика труб
+                // Logic Pipes
                 for (let i = pipes.length - 1; i >= 0; i--) {
                     let p = pipes[i];
-                    let screenX = p.distance - bird.distance + bird.x; // Высчитываем позицию трубы на экране!
+                    let screenX = p.distance - bird.distance + bird.x; 
 
+                    // Hitbox
                     if (bird.x + bird.size - 4 > screenX && bird.x - bird.size + 4 < screenX + p.width &&
                         (bird.y - bird.size + 4 < p.top || bird.y + bird.size - 4 > p.bottom)) die();
 
+                    // Pass Pipe
                     if (screenX + p.width < bird.x && !p.passed) {
-                        bird.score++; p.passed = true; updateLeaderboard();
+                        bird.score++; p.passed = true;
+                        playSound('score');
+                        spawnParticles(bird.x, bird.y, '#FFEB3B'); // Эффект пролета
+                        updateLeaderboard();
                     }
-                    if (screenX + p.width < -50) pipes.splice(i, 1);
+                    if (screenX + p.width < -100) pipes.splice(i, 1);
                 }
 
-                // Логика монет
+                // Logic Coins
                 for (let i = coinsArr.length - 1; i >= 0; i--) {
                     let c = coinsArr[i];
                     let screenX = c.distance - bird.distance + bird.x;
                     
-                    // Сбор монеты (радиус 15)
-                    if (!c.collected && Math.hypot(bird.x - screenX, bird.y - c.y) < bird.size + 15) {
+                    if (!c.collected && Math.hypot(bird.x - screenX, bird.y - c.y) < bird.size + 20) {
                         c.collected = true;
                         savedCoins++;
                         localStorage.setItem('coins', savedCoins);
                         document.getElementById('gameCoins').innerText = savedCoins;
+                        playSound('coin');
+                        spawnParticles(screenX, c.y, '#FFD700'); // Золотые брызги
+                        floatingTexts.push({ x: bird.x, y: bird.y - 20, text: '+1', alpha: 1.0 }); // Всплывающий текст
                     }
-                    if (screenX < -50) coinsArr.splice(i, 1);
+                    if (screenX < -100) coinsArr.splice(i, 1);
                 }
             }
 
-            // Отрисовка труб
+            // Draw Pipes (Вернул красивый дизайн)
             pipes.forEach(p => {
                 let screenX = p.distance - bird.distance + bird.x;
-                ctx.fillStyle = '#8BC34A';
+                
+                let pipeGrad = ctx.createLinearGradient(screenX, 0, screenX + p.width, 0);
+                pipeGrad.addColorStop(0, '#558B2F'); pipeGrad.addColorStop(0.5, '#8BC34A'); pipeGrad.addColorStop(1, '#33691E');
+                ctx.fillStyle = pipeGrad;
+
+                // Основная труба
                 ctx.fillRect(screenX, 0, p.width, p.top);
-                ctx.fillRect(screenX - 5, p.top - 20, p.width + 10, 20);
-                ctx.fillRect(screenX, p.bottom, p.width, VH - p.bottom);
-                ctx.fillRect(screenX - 5, p.bottom, p.width + 10, 20);
-                ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+                ctx.fillRect(screenX, p.bottom, p.width, canvas.height - p.bottom);
+                
+                // Шапки
+                ctx.fillRect(screenX - 5, p.top - 25, p.width + 10, 25);
+                ctx.fillRect(screenX - 5, p.bottom, p.width + 10, 25);
+                
+                // Обводка
+                ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
                 ctx.strokeRect(screenX, 0, p.width, p.top);
-                ctx.strokeRect(screenX, p.bottom, p.width, VH - p.bottom);
+                ctx.strokeRect(screenX, p.bottom, p.width, canvas.height - p.bottom);
+                ctx.strokeRect(screenX - 5, p.top - 25, p.width + 10, 25);
+                ctx.strokeRect(screenX - 5, p.bottom, p.width + 10, 25);
             });
 
-            // Отрисовка монет
+            // Draw Coins
             coinsArr.forEach(c => {
                 if(!c.collected) {
                     let screenX = c.distance - bird.distance + bird.x;
-                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(screenX, c.y, 15, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(screenX, c.y, 16, 0, Math.PI*2); ctx.fill();
                     ctx.lineWidth = 2; ctx.strokeStyle = '#B8860B'; ctx.stroke();
-                    ctx.fillStyle = '#DAA520'; ctx.font = '16px Arial'; ctx.textAlign = 'center'; ctx.fillText('$', screenX, c.y+6);
+                    ctx.fillStyle = '#DAA520'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.fillText('$', screenX, c.y+6);
                 }
             });
 
-            // Отрисовка других игроков (рассинхрон X!)
+            // Draw Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let pt = particles[i];
+                pt.x += pt.vx; pt.y += pt.vy; pt.life -= 0.05;
+                if (pt.life <= 0) { particles.splice(i, 1); continue; }
+                ctx.globalAlpha = pt.life;
+                ctx.fillStyle = pt.color;
+                ctx.fillRect(pt.x, pt.y, 5, 5);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Draw Floating Texts (+1 coin)
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ft.y -= 2; ft.alpha -= 0.02;
+                if (ft.alpha <= 0) { floatingTexts.splice(i, 1); continue; }
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = '#FFD700'; ctx.strokeStyle = 'black'; ctx.lineWidth = 3;
+                ctx.font = '24px Fredoka One'; ctx.textAlign = 'center';
+                ctx.strokeText(ft.text, ft.x, ft.y); ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Draw Other Players
             for (let id in players) {
                 if (id !== myId && players[id].alive) {
                     let p = players[id];
-                    // Считаем где они на экране относительно нашей дистанции
                     let relativeX = bird.x + (p.distance - bird.distance);
-                    // Отрисовываем их только если они в пределах экрана
-                    if (relativeX > -50 && relativeX < VW + 50) {
+                    if (relativeX > -50 && relativeX < canvas.width + 50) {
                         drawBird(relativeX, p.y, 0, p.color, p.skin, true, p.name);
                     }
                 }
             }
 
-            // Отрисовка себя
+            // Draw Self
             if (gameState !== 'dead') {
                 let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (bird.velocity * 0.1)));
                 drawBird(bird.x, bird.y, rotation, myColor, mySkin, false);
             } else {
-                ctx.font = '40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('💥', bird.x, bird.y);
+                ctx.font = '50px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('💥', bird.x, bird.y);
             }
 
-            // Счет
+            // Draw Score
             if (gameState === 'playing') {
-                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 6;
-                ctx.font = '60px Fredoka One'; ctx.textAlign = 'center';
-                ctx.strokeText(bird.score, VW / 2, 80); ctx.fillText(bird.score, VW / 2, 80);
+                ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = 8;
+                ctx.font = '80px Fredoka One'; ctx.textAlign = 'center';
+                ctx.strokeText(bird.score, canvas.width / 2, 100); ctx.fillText(bird.score, canvas.width / 2, 100);
             }
 
-            // Экран смерти
+            // Dead Screen
             if (gameState === 'dead') {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; ctx.fillRect(0, 0, VW, VH);
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "white"; ctx.textAlign = 'center';
-                ctx.font = "30px Fredoka One"; ctx.fillText("ИГРА ОКОНЧЕНА", VW / 2, VH / 2 - 20);
-                ctx.font = "16px Fredoka One"; ctx.fillText("Тапни чтобы попробовать снова", VW / 2, VH / 2 + 30);
+                ctx.strokeStyle = "black"; ctx.lineWidth = 4;
+                
+                ctx.font = "50px Fredoka One"; 
+                ctx.strokeText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+                
+                ctx.font = "24px Fredoka One"; 
+                ctx.strokeText("Tap to try again", canvas.width / 2, canvas.height / 2 + 30);
+                ctx.fillText("Tap to try again", canvas.width / 2, canvas.height / 2 + 30);
             }
 
-            ctx.restore(); // Сбрасываем масштабирование перед следующим кадром
             gameLoop = requestAnimationFrame(update);
         }
 
         function die() {
+            if (gameState === 'playing') playSound('hit');
             gameState = 'dead';
             socket.emit('updateState', { roomId: currentRoom, score: bird.score, alive: false, y: Math.round(bird.y), distance: bird.distance });
             
-            // Сохранение рекорда
             if (bird.score > bestRecord) {
                 bestRecord = bird.score;
                 localStorage.setItem('record', bestRecord);
